@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triqui</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Lobby Section -->
+        <section id="lobby" class="card fade-in">
+            <h1>Triqui <span class="accent">Traqui</span></h1>
+            <p class="subtitle">¡Juega con quien quieras en tiempo real!</p>
+
+            <div id="lobby-main-view">
+                <div class="input-group">
+                    <label for="username">Tu Nombre</label>
+                    <input type="text" id="username" placeholder="Ej. Juanito" autocomplete="off">
+                </div>
+
+                <div class="lobby-actions">
+                    <button id="createRoomBtn" class="primary-btn">Crear Nueva Sala</button>
+                    <div class="divider"><span>o</span></div>
+                    <button id="showJoinBtn" class="secondary-btn">Unirse a una Sala</button>
+                </div>
+            </div>
+
+            <div id="join-view" class="hidden">
+                <div class="input-group">
+                    <label for="roomId">Código de la Sala</label>
+                    <input type="text" id="roomId" placeholder="Ej. TQ-123" autocomplete="off">
+                </div>
+                <button id="joinBtn" class="primary-btn">Entrar a la Sala</button>
+                <button id="backBtn" class="text-link">← Volver</button>
+            </div>
+
+            <div id="lobby-status" class="status-msg"></div>
+        </section>
+
+        <!-- Game Section (Hidden initially) -->
+        <section id="game" class="card hidden">
+            <div class="room-tag">Sala: <span id="current-room-display" class="accent">---</span></div>
+            <div class="game-header">
+                <div class="player-info player-x">
+                    <span class="name" id="nameX">Jugador 1</span>
+                    <span class="score" id="scoreX">0</span>
+                </div>
+                <div class="vs">VS</div>
+                <div class="player-info player-o">
+                    <span class="score" id="scoreY">0</span>
+                    <span class="name" id="nameO">Jugador 2</span>
+                </div>
+            </div>
+
+            <div id="turn-indicator" class="turn-indicator">Esperando turno...</div>
+
+            <div class="board" id="board">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+
+            <div id="game-status" class="status-msg-big"></div>
+            <button id="restartBtn" class="secondary-btn hidden">Jugar de Nuevo</button>
+        </section>
+    </div>
+
+    <!-- Socket.io library -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

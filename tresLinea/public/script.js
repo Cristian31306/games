@@ -1,0 +1,193 @@
+const socket = io();
+
+// DOM Elements
+const lobbySection = document.getElementById('lobby');
+const lobbyMainView = document.getElementById('lobby-main-view');
+const joinView = document.getElementById('join-view');
+
+const gameSection = document.getElementById('game');
+const usernameInput = document.getElementById('username');
+const roomIdInput = document.getElementById('roomId');
+
+const createRoomBtn = document.getElementById('createRoomBtn');
+const showJoinBtn = document.getElementById('showJoinBtn');
+const joinBtn = document.getElementById('joinBtn');
+const backBtn = document.getElementById('backBtn');
+
+const lobbyStatus = document.getElementById('lobby-status');
+const currentRoomDisplay = document.getElementById('current-room-display');
+
+const cells = document.querySelectorAll('.cell');
+// ... rest of selectors
+// (I will use replace_file_content more precisely below)
+const board = document.getElementById('board');
+const turnIndicator = document.getElementById('turn-indicator');
+const gameStatus = document.getElementById('game-status');
+const restartBtn = document.getElementById('restartBtn');
+
+const nameX = document.getElementById('nameX');
+const nameO = document.getElementById('nameO');
+const scoreXDisplay = document.getElementById('scoreX');
+const scoreODisplay = document.getElementById('scoreY');
+
+// State
+let mySymbol = null;
+let currentRoomId = null;
+let isMyTurn = false;
+let myName = '';
+
+// Lobby Logic
+showJoinBtn.addEventListener('click', () => {
+    lobbyMainView.classList.add('hidden');
+    joinView.classList.remove('hidden');
+});
+
+backBtn.addEventListener('click', () => {
+    joinView.classList.add('hidden');
+    lobbyMainView.classList.remove('hidden');
+});
+
+createRoomBtn.addEventListener('click', () => {
+    const username = usernameInput.value.trim();
+    if (!username) {
+        lobbyStatus.innerText = 'Por favor ingresa tu nombre primero';
+        return;
+    }
+    
+    myName = username;
+    const randomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+    currentRoomId = randomCode;
+    socket.emit('joinRoom', { roomId: randomCode, username });
+    lobbyStatus.innerText = 'Creando sala...';
+});
+
+// Join Room
+joinBtn.addEventListener('click', () => {
+    const username = usernameInput.value.trim();
+    const roomId = roomIdInput.value.trim().toUpperCase();
+
+    if (!username || !roomId) {
+        lobbyStatus.innerText = 'Nombre y código de sala obligatorios';
+        return;
+    }
+
+    myName = username;
+    currentRoomId = roomId;
+    socket.emit('joinRoom', { roomId, username });
+    lobbyStatus.innerText = 'Uniéndote a la sala...';
+});
+
+// Socket Events
+socket.on('roomJoined', ({ roomId, symbol }) => {
+    currentRoomId = roomId;
+    mySymbol = symbol;
+    updateUIForGame();
+    turnIndicator.innerText = 'Esperando al otro jugador...';
+});
+
+socket.on('waiting', (msg) => {
+    lobbyStatus.innerText = msg;
+});
+
+socket.on('error', (msg) => {
+    lobbyStatus.innerText = msg;
+    alert(msg);
+});
+
+socket.on('gameStart', ({ players, currentTurn, board: boardState, scores }) => {
+    const me = players.find(p => p.id === socket.id);
+    const opponent = players.find(p => p.id !== socket.id);
+    
+    mySymbol = me.symbol;
+    updateUIForGame();
+    
+    // Update names
+    if (me.symbol === 'X') {
+        nameX.innerText = me.username + ' (Tú)';
+        nameO.innerText = opponent.username;
+    } else {
+        nameO.innerText = me.username + ' (Tú)';
+        nameX.innerText = opponent.username;
+    }
+
+    updateGameState(boardState, currentTurn, scores);
+});
+
+socket.on('moveMade', ({ board: boardState, nextTurn }) => {
+    updateGameState(boardState, nextTurn);
+});
+
+socket.on('gameEnd', ({ board: boardState, winner, scores }) => {
+    renderBoard(boardState);
+    isMyTurn = false;
+
+    if (winner === 'draw') {
+        gameStatus.innerText = '¡Empate!';
+    } else {
+        const winText = winner.id === socket.id ? '¡Ganaste!' : `Ganó ${winner.username}`;
+        gameStatus.innerText = winText;
+        updateScores(scores);
+    }
+
+    restartBtn.classList.remove('hidden');
+    turnIndicator.innerText = 'Fin de la partida';
+});
+
+socket.on('playerLeft', (msg) => {
+    alert(msg);
+    location.reload();
+});
+
+// Board Actions
+cells.forEach(cell => {
+    cell.addEventListener('click', () => {
+        const index = cell.getAttribute('data-index');
+        if (isMyTurn && !cell.classList.contains('x') && !cell.classList.contains('o')) {
+            socket.emit('makeMove', { roomId: currentRoomId, index });
+        }
+    });
+});
+
+restartBtn.addEventListener('click', () => {
+    socket.emit('restartGame', currentRoomId);
+    restartBtn.classList.add('hidden');
+    gameStatus.innerText = '';
+});
+
+// Helpers
+function updateUIForGame() {
+    lobbySection.classList.add('hidden');
+    gameSection.classList.remove('hidden');
+    gameSection.classList.add('fade-in');
+    currentRoomDisplay.innerText = currentRoomId;
+}
+
+function updateGameState(boardState, currentTurn, scores) {
+    renderBoard(boardState);
+    isMyTurn = (currentTurn === socket.id);
+    
+    if (isMyTurn) {
+        turnIndicator.innerText = `Tu turno (${mySymbol})`;
+        turnIndicator.style.background = 'rgba(63, 185, 80, 0.2)';
+        turnIndicator.style.color = 'var(--x-color)';
+    } else {
+        turnIndicator.innerText = 'Esperando al oponente...';
+        turnIndicator.style.background = 'rgba(88, 166, 255, 0.1)';
+        turnIndicator.style.color = 'var(--accent)';
+    }
+
+    if (scores) updateScores(scores);
+}
+
+function renderBoard(boardState) {
+    boardState.forEach((symbol, i) => {
+        cells[i].innerText = symbol || '';
+        cells[i].className = 'cell';
+        if (symbol) cells[i].classList.add(symbol.toLowerCase());
+    });
+}
+
+function updateScores(scores) {
+    scoreXDisplay.innerText = scores.x;
+    scoreODisplay.innerText = scores.o;
+}
