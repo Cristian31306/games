@@ -2,45 +2,41 @@
 import { ref, reactive, onMounted, watch, computed } from 'vue'
 
 const props = defineProps({
-  me: Object,
   myId: String,
-  other: Object,
-  otherId: String
+  players: Object,
+  categories: {
+    type: Array,
+    default: () => []
+  }
 })
 
 const emit = defineEmits(['finish'])
 
-const CATEGORIES = [
-  { id: 'nombre', label: 'Nombre' },
-  { id: 'apellido', label: 'Apellido' },
-  { id: 'ciudad', label: 'Ciudad' },
-  { id: 'cosa', label: 'Cosa' },
-  { id: 'color', label: 'Color' },
-  { id: 'fruta', label: 'Fruta' },
-  { id: 'animal', label: 'Animal' }
-]
+const me = computed(() => props.players[props.myId] || { name: '', answers: {} })
 
-// Estado de los checkboxes: { category: { me: true, other: true } }
+const otherPlayers = computed(() => {
+  return Object.values(props.players)
+    .filter(p => p.id !== props.myId)
+    .sort((a, b) => a.name.localeCompare(b.name))
+})
+
 const checks = reactive({})
 
 const initChecks = () => {
-  CATEGORIES.forEach(cat => {
-    // Solo inicializamos si no existe o si las respuestas cambiaron de vacío a algo
+  props.categories.forEach(cat => {
     if (!checks[cat.id]) {
-      checks[cat.id] = { me: false, other: false }
+      checks[cat.id] = { me: false }
     }
     
-    const myWord = (props.me.answers[cat.id] || '').trim()
-    const otherWord = (props.other.answers[cat.id] || '').trim()
-
+    // Auto-check my input if it exists
+    const myWord = (me.value.answers[cat.id] || '').trim()
     if (myWord.length > 1) checks[cat.id].me = true
-    if (otherWord.length > 1) checks[cat.id].other = true
   })
 }
 
-// Inicializar al montar y vigilar cambios por si llegan tarde
+// Inicializar al montar
 onMounted(initChecks)
-watch(() => [props.me.answers, props.other.answers], initChecks, { deep: true })
+watch(() => me.value.answers, initChecks, { deep: true })
 
 const normalize = (str) => {
   return (str || '')
@@ -54,16 +50,23 @@ const calculatePoints = () => {
   let myPoints = 0
   const details = {}
 
-  CATEGORIES.forEach(cat => {
-    const rawMy = (props.me.answers[cat.id] || '').trim()
-    const rawOther = (props.other.answers[cat.id] || '').trim()
-    
+  props.categories.forEach(cat => {
+    const rawMy = (me.value.answers[cat.id] || '').trim()
     const myWord = normalize(rawMy)
-    const otherWord = normalize(rawOther)
 
     let pts = 0
     if (checks[cat.id].me && rawMy.length > 1) {
-      if (myWord === otherWord && checks[cat.id].other && rawOther.length > 1) {
+      // Find if anyone else has the same word implicitly
+      let duplicated = false
+      otherPlayers.value.forEach(p => {
+        const rawOther = (p.answers[cat.id] || '').trim()
+        const otherWord = normalize(rawOther)
+        if (rawOther.length > 1 && myWord === otherWord) {
+          duplicated = true
+        }
+      })
+
+      if (duplicated) {
         pts = 50
       } else {
         pts = 100
@@ -77,7 +80,7 @@ const calculatePoints = () => {
   return { points: myPoints, details }
 }
 
-const isWaiting = computed(() => props.me.readyToResults)
+const isWaiting = computed(() => me.value.readyToResults)
 
 const finish = () => {
   if (isWaiting.value) return
@@ -94,14 +97,14 @@ const formatWord = (word) => word || '---'
       <h2>Calificación</h2>
       <p class="subtitle">Marquen si la palabra es válida para sumar puntos.</p>
 
-      <div class="validator-grid">
+      <div class="validator-grid" :style="{ gridTemplateColumns: `1.5fr 2fr repeat(${otherPlayers.length}, 1.5fr)` }">
         <!-- Encabezados -->
         <div class="grid-header">Categoría</div>
         <div class="grid-header">{{ me.name }} (Tú)</div>
-        <div class="grid-header">{{ other.name }}</div>
+        <div class="grid-header" v-for="p in otherPlayers" :key="p.id">{{ p.name }}</div>
 
         <!-- Filas de Categorías -->
-        <template v-for="cat in CATEGORIES" :key="cat.id">
+        <template v-for="cat in categories" :key="cat.id">
           <div class="grid-cat">{{ cat.label }}</div>
           
           <div class="grid-cell" :class="{ 'valid-word': checks[cat.id]?.me, 'invalid-word': !checks[cat.id]?.me }">
@@ -109,9 +112,8 @@ const formatWord = (word) => word || '---'
             <input type="checkbox" v-if="checks[cat.id] && (me.answers[cat.id] || '').trim().length > 1" v-model="checks[cat.id].me" class="custom-check" />
           </div>
 
-          <div class="grid-cell" :class="{ 'valid-word': checks[cat.id]?.other, 'invalid-word': !checks[cat.id]?.other }">
-            <span class="word-display">{{ formatWord(other.answers[cat.id]) }}</span>
-            <input type="checkbox" v-if="checks[cat.id] && (other.answers[cat.id] || '').trim().length > 1" v-model="checks[cat.id].other" class="custom-check" />
+          <div class="grid-cell other-cell" v-for="p in otherPlayers" :key="p.id" :class="{'valid-word': (p.answers[cat.id] || '').trim().length > 1}">
+            <span class="word-display">{{ formatWord(p.answers[cat.id]) }}</span>
           </div>
         </template>
       </div>
@@ -140,12 +142,11 @@ h2 { margin-bottom: 0.5rem; text-align: center; }
 
 .validator-grid {
   display: grid;
-  grid-template-columns: 1fr 2fr 2fr;
   gap: 1px;
   background: var(--glass-border);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
   margin-bottom: 2rem;
 }
 
@@ -182,10 +183,13 @@ h2 { margin-bottom: 0.5rem; text-align: center; }
   border-left: 2px solid #10b981 !important;
 }
 
+.other-cell {
+  background: rgba(255,255,255,0.02);
+}
+
 .invalid-word {
   opacity: 0.5;
   background: rgba(239, 68, 68, 0.05);
-  border-left: 2px solid #ef4444 !important;
 }
 
 .invalid-word .word-display {

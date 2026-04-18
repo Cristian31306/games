@@ -3,20 +3,14 @@ import { computed } from 'vue'
 
 const props = defineProps({
   rounds: Array,
-  players: Object
+  players: Object,
+  categories: {
+    type: Array,
+    default: () => []
+  }
 })
 
 const emit = defineEmits(['next', 'reset'])
-
-const CATEGORIES = [
-  { id: 'nombre', label: 'Nombre' },
-  { id: 'apellido', label: 'Apellido' },
-  { id: 'ciudad', label: 'Ciudad' },
-  { id: 'cosa', label: 'Cosa' },
-  { id: 'color', label: 'Color' },
-  { id: 'fruta', label: 'Fruta' },
-  { id: 'animal', label: 'Animal' }
-]
 
 const sortedPlayers = computed(() => {
   return Object.entries(props.players)
@@ -80,19 +74,19 @@ const historyTable = computed(() => {
           <thead>
             <tr>
               <th>Categoría</th>
-              <th>{{ sortedPlayers[0]?.name }}</th>
-              <th class="pts-th">Pts</th>
-              <th v-if="sortedPlayers[1]">{{ sortedPlayers[1]?.name }}</th>
-              <th v-if="sortedPlayers[1]" class="pts-th">Pts</th>
+              <template v-for="player in sortedPlayers" :key="player.id">
+                <th>{{ player.name }}</th>
+                <th class="pts-th">Pts</th>
+              </template>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cat in CATEGORIES" :key="cat.id">
+            <tr v-for="cat in categories" :key="cat.id">
               <td style="font-size: 0.9rem; color: var(--text-secondary);">{{ cat.label }}</td>
-              <td>{{ lastRound.players[sortedPlayers[0]?.id]?.answers[cat.id] || '---' }}</td>
-              <td class="pts-col">{{ lastRound.roundDetails[sortedPlayers[0]?.id]?.[cat.id] || 0 }}</td>
-              <td v-if="sortedPlayers[1]">{{ lastRound.players[sortedPlayers[1]?.id]?.answers[cat.id] || '---' }}</td>
-              <td v-if="sortedPlayers[1]" class="pts-col">{{ lastRound.roundDetails[sortedPlayers[1]?.id]?.[cat.id] || 0 }}</td>
+              <template v-for="player in sortedPlayers" :key="player.id">
+                <td>{{ lastRound.players[player.id]?.answers[cat.id] || '---' }}</td>
+                <td class="pts-col">{{ lastRound.roundDetails[player.id]?.[cat.id] || 0 }}</td>
+              </template>
             </tr>
           </tbody>
         </table>

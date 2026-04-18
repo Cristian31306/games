@@ -16,13 +16,30 @@ const io = new Server(server, {
     }
 });
 
+const DEFAULT_CATEGORIES = [
+    { id: 'nombre', label: 'Nombre', icon: '👤' },
+    { id: 'apellido', label: 'Apellido', icon: '👥' },
+    { id: 'ciudad', label: 'Ciudad / País', icon: '📍' },
+    { id: 'cosa', label: 'Cosa', icon: '📦' },
+    { id: 'color', label: 'Color', icon: '🎨' },
+    { id: 'fruta', label: 'Fruta / Verdura', icon: '🍎' },
+    { id: 'animal', label: 'Animal', icon: '🦁' }
+];
+
 let gameState = {
     status: 'esperando', // 'esperando', 'jugando', 'calificando', 'resultados'
     letter: '',
     players: {}, // id: { name: '', answers: {}, points: 0, readyToNext: false, readyToSkip: false, readyToResults: false, roundPoints: 0, roundDetails: {} }
     rounds: [], // { letter: '', roundPoints: {}, roundDetails: {}, players: {} }
-    timer: null
+    timer: 0,
+    hostId: null,
+    settings: {
+        timerDuration: 30,
+        categories: [...DEFAULT_CATEGORIES]
+    }
 };
+
+let countdownInterval = null;
 
 const CATEGORIES = ['Nombre', 'Apellido', 'Ciudad', 'Cosa', 'Color', 'Fruta', 'Animal'];
 
@@ -42,7 +59,18 @@ io.on('connection', (socket) => {
             roundPoints: 0,
             roundDetails: {}
         };
+        if (Object.keys(gameState.players).length === 1) {
+            gameState.hostId = socket.id;
+        }
         io.emit('stateUpdate', gameState);
+    });
+
+    // Actualizar configuración (sólo Host)
+    socket.on('updateSettings', (settings) => {
+        if (socket.id === gameState.hostId && gameState.status === 'esperando') {
+            gameState.settings = settings;
+            io.emit('stateUpdate', gameState);
+        }
     });
 
     // Iniciar ronda
@@ -65,13 +93,34 @@ io.on('connection', (socket) => {
                 gameState.players[id].roundDetails = {};
             });
 
+            if (countdownInterval) clearInterval(countdownInterval);
+            gameState.timer = gameState.settings.timerDuration;
+            
             io.emit('stateUpdate', gameState);
+
+            countdownInterval = setInterval(() => {
+                if (gameState.status !== 'jugando') {
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                gameState.timer -= 1;
+                io.emit('timerTick', gameState.timer);
+                
+                if (gameState.timer <= 0) {
+                    clearInterval(countdownInterval);
+                    // Force STOP
+                    gameState.status = 'calificando';
+                    io.emit('stopTriggered', { stopperId: 'system', stopperName: 'El Tiempo' });
+                    io.emit('stateUpdate', gameState);
+                }
+            }, 1000);
         }
     });
 
     // Enviar STOP
     socket.on('stop', (answers) => {
         if (gameState.status === 'jugando') {
+            if(countdownInterval) clearInterval(countdownInterval);
             gameState.players[socket.id].answers = answers;
             gameState.status = 'calificando';
             io.emit('stopTriggered', { stopperId: socket.id, stopperName: gameState.players[socket.id].name });
@@ -159,6 +208,7 @@ io.on('connection', (socket) => {
         Object.keys(gameState.players).forEach(id => {
             gameState.players[id].points = 0;
             gameState.players[id].answers = {};
+            gameState.players[id].readyToResults = false;
         });
         io.emit('stateUpdate', gameState);
     });
@@ -166,10 +216,17 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Usuario desconectado:', socket.id);
         delete gameState.players[socket.id];
-        if (Object.keys(gameState.players).length === 0) {
+        
+        const remainingIds = Object.keys(gameState.players);
+        if (remainingIds.length === 0) {
             // Reset if no players
             gameState.status = 'esperando';
             gameState.rounds = [];
+            gameState.hostId = null;
+            if(countdownInterval) clearInterval(countdownInterval);
+        } else if (socket.id === gameState.hostId) {
+            // Reasign host
+            gameState.hostId = remainingIds[0];
         }
         io.emit('stateUpdate', gameState);
     });

@@ -1,33 +1,28 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 
 const props = defineProps({
   letter: String,
   isDisabled: Boolean,
-  readyToSkip: Boolean
+  readyToSkip: Boolean,
+  categories: {
+    type: Array,
+    default: () => []
+  }
 })
 
 const emit = defineEmits(['stop', 'skip'])
 
-const CATEGORIES = [
-  { id: 'nombre', label: 'Nombre', icon: '👤' },
-  { id: 'apellido', label: 'Apellido', icon: '👥' },
-  { id: 'ciudad', label: 'Ciudad / País', icon: '📍' },
-  { id: 'cosa', label: 'Cosa', icon: '📦' },
-  { id: 'color', label: 'Color', icon: '🎨' },
-  { id: 'fruta', label: 'Fruta / Verdura', icon: '🍎' },
-  { id: 'animal', label: 'Animal', icon: '🦁' }
-]
+const answers = reactive({})
 
-const answers = reactive({
-  nombre: '',
-  apellido: '',
-  ciudad: '',
-  cosa: '',
-  color: '',
-  fruta: '',
-  animal: ''
-})
+// Initialize answers keys based on categories
+watch(() => props.categories, (newCats) => {
+  newCats.forEach(cat => {
+    if (!(cat.id in answers)) {
+      answers[cat.id] = ''
+    }
+  })
+}, { immediate: true })
 
 const handleStop = () => {
   emit('stop', { ...answers })
@@ -38,11 +33,9 @@ const handleSkip = () => {
 }
 
 const isButtonDisabled = computed(() => {
-  // Al menos un campo debe estar lleno para dar STOP (opcional, pero ayuda)
-  return Object.values(answers).every(v => v.trim() === '')
+  // Al menos un campo debe estar lleno para dar STOP
+  return Object.values(answers).every(v => typeof v !== 'string' || v.trim() === '')
 })
-
-import { computed } from 'vue'
 
 defineExpose({
   answers
@@ -53,10 +46,10 @@ defineExpose({
   <div class="game-view">
     <div class="bento-container">
       <div 
-        v-for="cat in CATEGORIES" 
+        v-for="cat in categories" 
         :key="cat.id" 
         class="bento-card"
-        :class="{ 'card-filled': answers[cat.id].trim() !== '' }"
+        :class="{ 'card-filled': (answers[cat.id] || '').trim() !== '' }"
       >
         <div class="category-label">
           <span>{{ cat.icon }}</span> {{ cat.label }}
