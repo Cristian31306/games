@@ -9,11 +9,15 @@ echo "🚀 Iniciando despliegue de Canal Games Hub..."
 echo "📦 Instalar dependencias raíz..."
 npm install
 
-# 2. Instalar dependencias y construir sub-proyectos
+# 2. Asegurar permisos de ejecución en binarios (Para evitar 'vite: Permission denied')
+echo "🔑 Asegurando permisos de ejecución en binarios..."
+chmod -R +x node_modules/.bin/ || true
+
+# 3. Construyendo sub-proyectos (Stop, etc.)...
 echo "🏗️ Construyendo sub-proyectos (Stop, etc.)..."
 npm run build
 
-# 3. Reiniciar el servidor con PM2
+# 4. Reiniciar el servidor con PM2
 echo "🔄 Reiniciando proceso en PM2..."
 if pm2 list | grep -q "algorah-games-hub"; then
     pm2 restart ecosystem.config.cjs
