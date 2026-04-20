@@ -1,0 +1,22 @@
+{
+  "name": "algorah-games-hub",
+  "version": "1.0.0",
+  "description": "Biblioteca unificada de juegos Algorah",
+  "main": "server.js",
+  "type": "module",
+  "workspaces": [
+    "stop",
+    "tresLinea"
+  ],
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "socket.io-client": "^4.7.4"
+  }
+}
