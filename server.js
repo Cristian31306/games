@@ -262,16 +262,24 @@ stopNamespace.on('connection', (socket) => {
                     player.readyToResults = false;
                 });
 
-                room.rounds.push({
+                const roundData = {
                     letter: room.letter,
-                    results: Object.values(room.players).map(p => ({
+                    players: {},
+                    roundPoints: {},
+                    roundDetails: {}
+                };
+
+                Object.values(room.players).forEach(p => {
+                    roundData.players[p.id] = { 
                         id: p.id,
                         name: p.name,
-                        points: p.roundPoints,
-                        details: p.roundDetails,
-                        answers: p.answers
-                    }))
+                        answers: { ...p.answers }
+                    };
+                    roundData.roundPoints[p.id] = p.roundPoints;
+                    roundData.roundDetails[p.id] = p.roundDetails;
                 });
+
+                room.rounds.push(roundData);
 
                 room.status = 'resultados';
                 stopNamespace.to(roomId).emit('stateUpdate', room);

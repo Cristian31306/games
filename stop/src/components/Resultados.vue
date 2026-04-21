@@ -31,7 +31,7 @@ const isTie = computed(() => {
 
 // Desglose de rondas para la "Tabla de Victoria"
 const historyTable = computed(() => {
-  return props.rounds.map(round => {
+  return (props.rounds || []).map(round => {
     return {
       letter: round.letter,
       scores: { ...(round.roundPoints || {}) }
@@ -84,8 +84,8 @@ const historyTable = computed(() => {
             <tr v-for="cat in categories" :key="cat.id">
               <td style="font-size: 0.9rem; color: var(--text-secondary);">{{ cat.label }}</td>
               <template v-for="player in sortedPlayers" :key="player.id">
-                <td>{{ lastRound.players[player.id]?.answers[cat.id] || '---' }}</td>
-                <td class="pts-col">{{ lastRound.roundDetails[player.id]?.[cat.id] || 0 }}</td>
+                <td>{{ lastRound?.players?.[player.id]?.answers?.[cat.id] || '---' }}</td>
+                <td class="pts-col">{{ lastRound?.roundDetails?.[player.id]?.[cat.id] || 0 }}</td>
               </template>
             </tr>
           </tbody>
