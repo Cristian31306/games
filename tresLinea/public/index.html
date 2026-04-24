@@ -9,36 +9,37 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
     <div class="container">
         <!-- Lobby Section -->
-        <section id="lobby" class="card fade-in">
-            <a href="/" class="text-link" style="position: absolute; top: 1rem; right: 1rem; text-decoration: none; font-size: 0.8rem; opacity: 0.6;">🏠 Volver al Lobby</a>
-            <h1>Triqui <span class="accent">Traqui</span></h1>
+        <section id="lobby" class="card fade-in active-glow">
+            <a href="/" class="text-link" style="position: absolute; top: 1rem; right: 2rem; color: #666; text-decoration: none; font-size: 0.9rem; z-index: 100;">🏠 Volver al Lobby</a>
+            <h1>¡Bienvenido a TRIQUI!</h1>
             <p class="subtitle">¡Juega con quien quieras en tiempo real!</p>
 
             <div id="lobby-main-view">
                 <div class="input-group">
-                    <label for="username">Tu Nombre</label>
-                    <input type="text" id="username" placeholder="Ej. Juanito" autocomplete="off">
+                    <label>TU NOMBRE</label>
+                    <input type="text" id="username" placeholder="Ej: Camilo" autocomplete="off">
                 </div>
 
                 <div class="lobby-actions">
-                    <button id="createRoomBtn" class="primary-btn">Crear Nueva Sala</button>
-                    <div class="divider"><span>o</span></div>
-                    <button id="showJoinBtn" class="secondary-btn">Unirse a una Sala</button>
+                    <button id="createRoomBtn" class="primary-btn">CREAR NUEVA SALA</button>
+                    <div class="divider"><span>O</span></div>
+                    <button id="showJoinBtn" class="secondary-btn">UNIRSE A UNA SALA</button>
                 </div>
             </div>
 
             <div id="join-view" class="hidden">
                 <div class="input-group">
-                    <label for="roomId">Código de la Sala</label>
-                    <input type="text" id="roomId" placeholder="Ej. TQ-123" autocomplete="off">
+                    <label>CÓDIGO DE LA SALA</label>
+                    <input type="text" id="roomId" placeholder="Ej: XJ92K" autocomplete="off">
                 </div>
-                <button id="joinBtn" class="primary-btn">Entrar a la Sala</button>
-                <button id="backBtn" class="text-link">← Volver</button>
+                <button id="joinBtn" class="primary-btn">ENTRAR A LA SALA</button>
+                <button id="backBtn" class="text-link"><i class="fas fa-arrow-left"></i> Volver</button>
             </div>
 
             <div id="lobby-status" class="status-msg"></div>

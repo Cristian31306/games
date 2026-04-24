@@ -8,7 +8,8 @@
     "stop",
     "tresLinea",
     "adivina",
-    "bomba"
+    "bomba",
+    "pictionary"
   ],
   "scripts": {
     "start": "node server.js",

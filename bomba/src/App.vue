@@ -48,6 +48,7 @@ const connect = (creatorMode = false) => {
 
 const startGame = () => socket.value.emit('startGame')
 const passBomb = () => socket.value.emit('passBomb')
+const resetGame = () => socket.value.emit('resetGame')
 
 const isHost = computed(() => gameState.value.hostId === myId.value)
 const isMyTurn = computed(() => gameState.value.currentPlayerId === myId.value)
@@ -57,6 +58,7 @@ const playersList = computed(() => Object.values(gameState.value.players))
 <template>
   <div class="app-shell" :class="{ 'my-turn-bg': isMyTurn && gameState.status === 'jugando' }">
     <div class="glass-bg"></div>
+    <a href="/" style="position: fixed; top: 1rem; right: 2rem; color: #666; text-decoration: none; font-size: 0.9rem; z-index: 100;">🏠 Volver al Lobby</a>
     
     <div class="game-container">
       <header v-if="joined" class="fade-in">
@@ -69,36 +71,37 @@ const playersList = computed(() => Object.values(gameState.value.players))
 
       <main>
         <!-- LOGIN FLOW -->
-        <div v-if="!joined" class="login-card bento-card slide-up">
-          <h2>¡Cuidado! 💣</h2>
+        <div v-if="!joined" class="login-card bento-card slide-up active-glow">
+          <h2>¡Bienvenido a BOMBA CALIENTE!</h2>
+          
           <div v-if="loginView === 'selection'" class="view-content">
-            <p>Escribe tu nombre para entrar al juego.</p>
+            <p>Elige cómo quieres empezar a jugar.</p>
             <div class="field">
               <label>TU NOMBRE</label>
               <input v-model="myName" placeholder="Ej: Juan" class="premium-input">
             </div>
             <div class="action-stack">
-              <button class="main-btn" @click="startCreate" :disabled="!myName.trim()">CREAR SALA</button>
+              <button class="main-btn" @click="startCreate" :disabled="!myName.trim()">CREAR NUEVA SALA</button>
               <div class="divider"><span>O</span></div>
-              <button class="main-btn secondary-btn" @click="startJoin" :disabled="!myName.trim()">UNIRSE A SALA</button>
+              <button class="main-btn secondary-btn" @click="startJoin" :disabled="!myName.trim()">UNIRSE A UNA SALA</button>
             </div>
           </div>
 
           <div v-else-if="loginView === 'create'" class="view-content">
-            <p>Comparte el código con tu parche.</p>
+            <p>Comparte este código con tus amigos para jugar.</p>
             <div class="code-hero">{{ roomId }}</div>
-            <button class="main-btn" @click="connect(true)">ENTRAR AHORA</button>
+            <button class="main-btn" @click="connect(true)">ENTRAR A LA SALA</button>
             <button class="back-link" @click="backToSelection"><i class="fas fa-arrow-left"></i> Volver</button>
           </div>
 
           <div v-else-if="loginView === 'join'" class="view-content">
-            <p>Digita el código de la sala.</p>
+            <p>Introduce el código de la sala de tu amigo.</p>
             <div class="field">
-              <label>CÓDIGO</label>
+              <label>CÓDIGO DE SALA</label>
               <input v-model="roomId" placeholder="Ej: XJ92K" class="premium-input" @keyup.enter="connect(false)">
             </div>
-            <button class="main-btn" @click="connect(false)" :disabled="!roomId.trim()">UNIRSE</button>
-            <button class="back-link" @click="backToSelection"><i class="fas fa-arrow-left"></i> Volver</button>
+            <button class="main-btn" @click="connect(false)" :disabled="!roomId.trim()">UNIRSE AHORA</button>
+            <button class="back-link" @click="backToSelection">← Volver</button>
           </div>
         </div>
 
@@ -165,6 +168,22 @@ const playersList = computed(() => Object.values(gameState.value.players))
           <button v-if="isHost" @click="startGame" class="main-btn">JUGAR OTRA RONDA</button>
           <div v-else class="waiting-footer">Esperando al host...</div>
         </div>
+
+        <!-- FINAL -->
+        <div v-else-if="gameState.status === 'final'" class="explosion-view bento-card slide-up">
+          <div class="explosion-icon"><i class="fas fa-skull-crossbones"></i></div>
+          <h2 class="boom-text">PARTIDA TERMINADA</h2>
+          <div class="loser-card">
+            <p>El gran perdedor es:</p>
+            <h3>{{ gameState.players[gameState.loserId]?.name }}</h3>
+          </div>
+          <p>¡Se quedó sin vidas!</p>
+          
+          <div class="action-stack" v-if="isHost">
+            <button @click="resetGame" class="main-btn">VOLVER AL LOBBY</button>
+          </div>
+          <div v-else class="waiting-footer">El host decidirá si jugar otra partida...</div>
+        </div>
       </main>
     </div>
   </div>
@@ -221,7 +240,14 @@ header h1 { font-size: 1.1rem; font-weight: 900; letter-spacing: 2px; margin: 0;
 .main-btn { width: 100%; padding: 1.3rem; border-radius: 18px; border: none; background: #000; color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease; }
 .main-btn:hover:not(:disabled) { background: var(--primary); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2); }
 .main-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.secondary-btn { background: #f1f5f9; color: #000; }
+.secondary-btn { background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; }
+.secondary-btn:hover:not(:disabled) { background: #e2e8f0; color: #000; }
+
+.field { margin-bottom: 2rem; text-align: left; }
+.field label { display: block; font-size: 0.8rem; font-weight: 800; color: var(--text); margin-bottom: 0.8rem; letter-spacing: 1px; }
+
+.view-content { padding: 1rem 0; }
+.view-content p { margin-bottom: 2rem; color: #64748b; font-size: 0.95rem; }
 
 .divider { display: flex; align-items: center; gap: 1rem; color: #cbd5e1; font-size: 0.8rem; font-weight: 800; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }

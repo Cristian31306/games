@@ -167,13 +167,13 @@ function updateGameState(boardState, currentTurn, scores) {
     isMyTurn = (currentTurn === socket.id);
     
     if (isMyTurn) {
-        turnIndicator.innerText = `Tu turno (${mySymbol})`;
-        turnIndicator.style.background = 'rgba(63, 185, 80, 0.2)';
-        turnIndicator.style.color = 'var(--x-color)';
+        turnIndicator.innerText = `TU TURNO (${mySymbol})`;
+        turnIndicator.style.background = 'rgba(37, 99, 235, 0.1)';
+        turnIndicator.style.color = 'var(--primary)';
     } else {
-        turnIndicator.innerText = 'Esperando al oponente...';
-        turnIndicator.style.background = 'rgba(88, 166, 255, 0.1)';
-        turnIndicator.style.color = 'var(--accent)';
+        turnIndicator.innerText = 'ESPERANDO AL OPONENTE...';
+        turnIndicator.style.background = 'rgba(0, 0, 0, 0.05)';
+        turnIndicator.style.color = 'var(--text-dim)';
     }
 
     if (scores) updateScores(scores);

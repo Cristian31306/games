@@ -90,6 +90,7 @@ const playersList = computed(() => Object.values(gameState.value.players))
 
 <template>
   <div class="app-shell">
+    <a href="/" style="position: fixed; top: 1rem; right: 2rem; color: #666; text-decoration: none; font-size: 0.9rem; z-index: 100;">🏠 Volver al Lobby</a>
     <div class="glass-bg"></div>
     
     <div class="game-container">
@@ -103,8 +104,8 @@ const playersList = computed(() => Object.values(gameState.value.players))
 
       <main>
         <!-- LOGIN FLOW (Matching STOP style) -->
-        <div v-if="!joined" class="login-card bento-card slide-up">
-          <h2>¡Bienvenido!</h2>
+        <div v-if="!joined" class="login-card bento-card slide-up active-glow">
+          <h2>¡Bienvenido a ADIVINA QUIÉN!</h2>
           
           <!-- View: Selection -->
           <div v-if="loginView === 'selection'" class="view-content">
@@ -131,7 +132,7 @@ const playersList = computed(() => Object.values(gameState.value.players))
             <button class="main-btn" @click="connect(true)">
               ENTRAR A LA SALA
             </button>
-            <button class="back-link" @click="backToSelection"><i class="fas fa-arrow-left"></i> Volver</button>
+            <button class="back-link" @click="backToSelection">← Volver</button>
           </div>
 
           <!-- View: Join -->
@@ -144,7 +145,7 @@ const playersList = computed(() => Object.values(gameState.value.players))
             <button class="main-btn" @click="connect(false)" :disabled="!roomId.trim()">
               UNIRSE AHORA
             </button>
-            <button class="back-link" @click="backToSelection"><i class="fas fa-arrow-left"></i> Volver</button>
+            <button class="back-link" @click="backToSelection">← Volver</button>
           </div>
         </div>
 
@@ -257,6 +258,19 @@ const playersList = computed(() => Object.values(gameState.value.players))
 
           <div class="next-player-preview">
             Siguiente en adivinar: <strong>{{ gameState.players[gameState.guesserId]?.name }}</strong>
+          </div>
+
+          <div class="current-scoreboard">
+            <h4>Marcador Actual</h4>
+            <div class="scoreboard">
+              <div v-for="p in playersList.sort((a,b) => b.points - a.points)" :key="p.id" class="score-row">
+                <div class="player-info">
+                  <div class="mini-avatar">{{ p.name[0] }}</div>
+                  <span>{{ p.name }}</span>
+                </div>
+                <div class="player-points">{{ p.points }} pts</div>
+              </div>
+            </div>
           </div>
 
           <button v-if="isHost" @click="confirmNextTurn" class="main-btn">
@@ -740,6 +754,21 @@ p {
   font-weight: 600;
   font-size: 0.9rem;
 }
+.current-scoreboard {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 24px;
+  border: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+.current-scoreboard h4 {
+  margin: 0 0 1rem 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+}
 
 /* Transición de Turno */
 .turn-transition {
@@ -786,11 +815,48 @@ p {
 .trophy-icon { font-size: 6rem; color: #f59e0b; margin-bottom: 1.5rem; text-align: center; display: block; }
 
 
+.login-card { 
+  max-width: 450px !important; 
+  margin: 0 auto; 
+  padding: 3rem !important;
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 15px 45px rgba(37, 99, 235, 0.1) !important;
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px rgba(37, 99, 235, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.4); }
+  100% { box-shadow: 0 0 5px rgba(37, 99, 235, 0.2); }
+}
+
+.active-glow {
+  animation: glow 2s infinite;
+}
+
+.action-stack { display: flex; flex-direction: column; gap: 1rem; }
+.main-btn { width: 100%; padding: 1.2rem; border-radius: 14px; border: none; background: #000; color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease; }
+.main-btn:hover:not(:disabled) { background: var(--primary); transform: translateY(-2px); }
+.main-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.secondary-btn { background: #f1f5f9 !important; color: #000 !important; border: 1px solid #e2e8f0 !important; }
+
+.divider { display: flex; align-items: center; text-align: center; color: #64748b; font-size: 0.8rem; margin: 0.5rem 0; }
+.divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
+.divider span { padding: 0 1rem; }
+
+.code-hero { font-size: 3.5rem; font-weight: 900; color: var(--primary); letter-spacing: 5px; margin-bottom: 2rem; text-align: center; }
+.back-link { background: none; border: none; color: #64748b; margin-top: 1.5rem; cursor: pointer; font-size: 0.9rem; width: 100%; text-align: center; }
+
+.field { margin-bottom: 2.5rem; text-align: left; }
+.field label { display: block; font-size: 0.8rem; font-weight: 800; color: #0f172a; margin-bottom: 0.6rem; letter-spacing: 1px; }
+.premium-input { width: 100%; padding: 1.2rem; border: 2px solid #e2e8f0; border-radius: 14px; font-size: 1.1rem; outline: none; box-sizing: border-box; color: #000; }
+.premium-input::placeholder { color: #94a3b8; }
+.premium-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+
 /* Animations */
 .fade-in { animation: fadeIn 0.8s ease; }
 .slide-up { animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
 
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 </style>

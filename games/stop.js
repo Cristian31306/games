@@ -103,6 +103,12 @@ export default function registerStopHandlers(io, socket) {
             const usedLetters = room.rounds.map(r => r.letter);
             const availableLetters = alphabet.split('').filter(l => !usedLetters.includes(l));
             
+            if (availableLetters.length === 0) {
+                room.status = 'final';
+                stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
+                return;
+            }
+
             room.letter = availableLetters[Math.floor(Math.random() * availableLetters.length)];
             room.status = 'jugando';
             room.validation = {};
@@ -242,6 +248,23 @@ export default function registerStopHandlers(io, socket) {
                 room.status = 'resultados';
                 stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
             }
+        }
+    });
+
+    socket.on('resetGame', () => {
+        const roomId = socket.roomId;
+        const room = stopRooms.get(roomId);
+        if (room && room.hostId === socket.id) {
+            room.status = 'esperando';
+            room.rounds = [];
+            room.letter = '';
+            Object.values(room.players).forEach(p => {
+                p.points = 0;
+                p.answers = {};
+                p.roundPoints = 0;
+                p.roundDetails = {};
+            });
+            stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
         }
     });
 

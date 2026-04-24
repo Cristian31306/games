@@ -234,6 +234,33 @@ const me = computed(() => gameState.value.players[myId.value] || {})
           @next="startRound"
           @reset="handleResetGame"
         />
+
+        <!-- Pantalla Final -->
+        <div v-else-if="gameState.status === 'final'" class="view-center">
+          <div class="bento-card active-glow lobby-card results-final">
+            <div class="trophy-icon" style="font-size: 5rem; text-align: center; margin-bottom: 1rem;">🏆</div>
+            <h2 style="text-align: center; margin-bottom: 2rem;">Podio Final</h2>
+            
+            <div class="final-scoreboard">
+              <div v-for="(p, index) in Object.values(gameState.players).sort((a,b) => b.points - a.points)" :key="p.id" 
+                   class="player-tag" :class="{ 'winner': index === 0 }" 
+                   style="width: 100%; justify-content: space-between; padding: 1rem; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <span class="rank" style="font-weight: 900; color: var(--accent-color);">#{{ index + 1 }}</span>
+                  <span>{{ p.name }}</span>
+                </div>
+                <span style="font-weight: 800;">{{ p.points }} pts</span>
+              </div>
+            </div>
+
+            <div v-if="isHost" style="margin-top: 2rem;">
+              <button class="stop-btn start-match-btn" @click="handleResetGame">NUEVA PARTIDA</button>
+            </div>
+            <div v-else class="waiting-footer" style="margin-top: 2rem; text-align: center;">
+              El anfitrión decidirá si jugar otra partida...
+            </div>
+          </div>
+        </div>
       </transition>
     </main>
   </div>
