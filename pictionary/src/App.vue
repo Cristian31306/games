@@ -63,6 +63,7 @@ onMounted(() => {
   socket.value.on('message', (msg) => {
     if (gameState.value) {
       if (!gameState.value.chat) gameState.value.chat = []
+      gameState.value.chat.push(msg)
       if (gameState.value.chat.length > 50) gameState.value.chat.shift()
     }
     nextTick(() => {
