@@ -116,7 +116,17 @@ export default function registerAdivinaHandlers(io, socket) {
             room.guesserId = playerIds[0];
             room.usedWords = []; // Resetear palabras usadas al inicio de la partida
             
-            const words = ADIVINA_WORDS[room.settings.category] || ADIVINA_WORDS["Música"];
+            const category = room.settings.category;
+            let words = [];
+            
+            if (category === "Aleatoria") {
+                Object.values(ADIVINA_WORDS).forEach(catWords => {
+                    words = words.concat(catWords);
+                });
+            } else {
+                words = ADIVINA_WORDS[category] || ADIVINA_WORDS["Música"];
+            }
+
             room.currentWord = words[Math.floor(Math.random() * words.length)];
             room.usedWords.push(room.currentWord);
             room.timer = room.settings.timerDuration;
@@ -178,7 +188,17 @@ export default function registerAdivinaHandlers(io, socket) {
             const nextIndex = (currentIndex + 1) % playerIds.length;
             room.guesserId = playerIds[nextIndex];
 
-            const words = ADIVINA_WORDS[room.settings.category] || ADIVINA_WORDS["Música"];
+            const category = room.settings.category;
+            let words = [];
+            
+            if (category === "Aleatoria") {
+                // Combinar todas las palabras de todas las categorías
+                Object.values(ADIVINA_WORDS).forEach(catWords => {
+                    words = words.concat(catWords);
+                });
+            } else {
+                words = ADIVINA_WORDS[category] || ADIVINA_WORDS["Música"];
+            }
             
             // Filtrar palabras que no se han usado
             let availableWords = words.filter(w => !room.usedWords.includes(w));
