@@ -26,7 +26,7 @@ const gameState = ref({
   lastTurnResult: null
 })
 
-const categories = ["Música", "TV y Cine", "Deportes", "Tendencias"]
+const categories = ["Música", "TV y Cine", "Deportes", "Tendencias", "Lugares", "Comida"]
 const timerOptions = [30, 60, 120, 180]
 
 const generateCode = () => {
