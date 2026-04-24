@@ -15,6 +15,7 @@ const chatContainer = ref(null)
 // Canvas Drawing State
 const canvasRef = ref(null)
 const isDrawing = ref(false)
+const selectedTool = ref('brush')
 const color = ref('#000000')
 const lineWidth = ref(5)
 const lastPos = ref({ x: 0, y: 0 })
@@ -50,7 +51,18 @@ onMounted(() => {
     myWord.value = word
   })
 
+  socket.value.on('timerUpdate', (time) => {
+    if (gameState.value) {
+      gameState.value.timer = time
+    }
+  })
+
   socket.value.on('message', (msg) => {
+    if (gameState.value) {
+      if (!gameState.value.chat) gameState.value.chat = []
+      gameState.value.chat.push(msg)
+      if (gameState.value.chat.length > 20) gameState.value.chat.shift()
+    }
     nextTick(() => {
       if (chatContainer.value) {
         chatContainer.value.scrollTop = chatContainer.value.scrollHeight
@@ -109,7 +121,7 @@ const draw = (e) => {
     y1: lastPos.value.y,
     x2: x,
     y2: y,
-    color: color.value,
+    color: selectedTool.value === 'eraser' ? '#ffffff' : color.value,
     width: lineWidth.value
   }
   
@@ -290,14 +302,22 @@ const getInitials = (name) => {
 
               <div v-if="isDrawer && gameState.status === 'jugando'" class="toolbar bento-card">
                 <div class="tool-group">
-                  <input type="color" v-model="color" class="color-picker">
+                  <div class="tool-selector">
+                    <button @click="selectedTool = 'brush'" :class="{ active: selectedTool === 'brush' }" title="Pincel">
+                      <i class="fas fa-paint-brush"></i>
+                    </button>
+                    <button @click="selectedTool = 'eraser'" :class="{ active: selectedTool === 'eraser' }" title="Borrador">
+                      <i class="fas fa-eraser"></i>
+                    </button>
+                  </div>
+                  <input type="color" v-model="color" class="color-picker" :disabled="selectedTool === 'eraser'">
                   <div class="brush-sizes">
                     <button v-for="size in [2, 5, 10, 20]" :key="size" @click="lineWidth = size" :class="{ active: lineWidth === size }">
                       <div class="dot" :style="{ width: size + 'px', height: size + 'px' }"></div>
                     </button>
                   </div>
                 </div>
-                <button @click="clearCanvas" class="clear-btn"><i class="fas fa-trash"></i> Limpiar</button>
+                <button @click="clearCanvas" class="clear-btn"><i class="fas fa-trash"></i> Limpiar Lienzo</button>
               </div>
             </div>
 
@@ -408,14 +428,19 @@ canvas { width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
 .round-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; }
 .round-overlay h3 { font-size: 2.5rem; margin-bottom: 1rem; }
 
-.toolbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem; }
-.tool-group { display: flex; align-items: center; gap: 1.5rem; }
-.color-picker { width: 50px; height: 50px; border: none; padding: 0; background: none; cursor: pointer; border-radius: 10px; }
-.brush-sizes { display: flex; gap: 0.5rem; }
-.brush-sizes button { width: 40px; height: 40px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem; flex-wrap: wrap; gap: 1rem; }
+.tool-group { display: flex; align-items: center; gap: 1.2rem; }
+.tool-selector { display: flex; gap: 0.5rem; background: #f1f5f9; padding: 0.4rem; border-radius: 12px; }
+.tool-selector button { width: 40px; height: 40px; border-radius: 8px; border: none; background: transparent; cursor: pointer; color: #64748b; transition: all 0.2s; }
+.tool-selector button.active { background: #fff; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.color-picker { width: 45px; height: 45px; border: none; padding: 0; background: none; cursor: pointer; border-radius: 10px; }
+.color-picker:disabled { opacity: 0.3; cursor: not-allowed; }
+.brush-sizes { display: flex; gap: 0.4rem; }
+.brush-sizes button { width: 38px; height: 38px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
 .brush-sizes button.active { background: var(--primary); color: #fff; }
 .dot { background: currentColor; border-radius: 50%; }
-.clear-btn { width: auto; padding: 0.8rem 1.5rem; background: var(--danger); }
+.clear-btn { width: auto; padding: 0.8rem 1.2rem; background: #fee2e2; color: var(--danger); border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+.clear-btn:hover { background: #fecaca; }
 
 /* Chat Sidebar */
 .chat-sidebar { display: flex; flex-direction: column; overflow: hidden; }
