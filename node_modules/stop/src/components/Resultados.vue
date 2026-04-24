@@ -159,8 +159,16 @@ const historyTable = computed(() => {
 
 .action-buttons {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
   margin-top: 2rem;
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  .action-buttons {
+    flex-direction: row;
+  }
 }
 
 .next-btn {

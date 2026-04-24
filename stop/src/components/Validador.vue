@@ -66,42 +66,44 @@ const getIsValid = (pId, catId) => {
       <h2>Calificación Cruzada</h2>
       <p class="subtitle">Validación sincronizada. Los cambios se ven en tiempo real.</p>
 
-      <div v-if="allPlayers.length > 0" class="validator-grid" :style="{ gridTemplateColumns: `1.5fr repeat(${allPlayers.length}, 1fr)` }">
-        <!-- Encabezados -->
-        <div class="grid-header">Categoría</div>
-        <div class="grid-header" v-for="p in allPlayers" :key="p.id" :class="{ 'is-me': p.id === myId }">
-          {{ p.name || 'Jugador' }} {{ p.id === myId ? '(Tú)' : '' }}
-        </div>
+      <div class="validator-scroll-container">
+        <div v-if="allPlayers.length > 0" class="validator-grid" :style="{ gridTemplateColumns: `1.5fr repeat(${allPlayers.length}, 1fr)` }">
+          <!-- Encabezados -->
+          <div class="grid-header">Categoría</div>
+          <div class="grid-header" v-for="p in allPlayers" :key="p.id" :class="{ 'is-me': p.id === myId }">
+            {{ p.name || 'Jugador' }} {{ p.id === myId ? '(Tú)' : '' }}
+          </div>
 
-        <!-- Filas de Categorías -->
-        <template v-for="cat in categories" :key="cat.id">
-          <div class="grid-cat">{{ cat.label }}</div>
-          
-          <div 
-            v-for="p in allPlayers" 
-            :key="p.id"
-            class="grid-cell" 
-            :class="{ 
-              'valid-word': getIsValid(p.id, cat.id), 
-              'invalid-word': !getIsValid(p.id, cat.id) && p.answers && (p.answers[cat.id] || '').trim().length > 1,
-              'empty-word': !p.answers || !(p.answers[cat.id] || '').trim().length > 1,
-              'clickable': !isWaiting && p.answers && (p.answers[cat.id] || '').trim().length > 1
-            }"
-            @click="toggle(p.id, cat.id, p.answers)"
-          >
-            <div class="cell-content">
-              <span class="word-display">{{ p.answers ? formatWord(p.answers[cat.id]) : '---' }}</span>
-              <div v-if="p.answers && (p.answers[cat.id] || '').trim().length > 1" class="check-wrapper">
-                <input 
-                  type="checkbox" 
-                  :checked="getIsValid(p.id, cat.id)" 
-                  class="real-check" 
-                  @click.stop
-                />
+          <!-- Filas de Categorías -->
+          <template v-for="cat in categories" :key="cat.id">
+            <div class="grid-cat">{{ cat.label }}</div>
+            
+            <div 
+              v-for="p in allPlayers" 
+              :key="p.id"
+              class="grid-cell" 
+              :class="{ 
+                'valid-word': getIsValid(p.id, cat.id), 
+                'invalid-word': !getIsValid(p.id, cat.id) && p.answers && (p.answers[cat.id] || '').trim().length > 1,
+                'empty-word': !p.answers || !(p.answers[cat.id] || '').trim().length > 1,
+                'clickable': !isWaiting && p.answers && (p.answers[cat.id] || '').trim().length > 1
+              }"
+              @click="toggle(p.id, cat.id, p.answers)"
+            >
+              <div class="cell-content">
+                <span class="word-display">{{ p.answers ? formatWord(p.answers[cat.id]) : '---' }}</span>
+                <div v-if="p.answers && (p.answers[cat.id] || '').trim().length > 1" class="check-wrapper">
+                  <input 
+                    type="checkbox" 
+                    :checked="getIsValid(p.id, cat.id)" 
+                    class="real-check" 
+                    @click.stop
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
 
       <div class="validator-footer">
@@ -130,14 +132,20 @@ const getIsValid = (pId, catId) => {
 h2 { margin-bottom: 0.5rem; text-align: center; }
 .subtitle { color: var(--text-secondary); text-align: center; margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.6; }
 
+.validator-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 2.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  -webkit-overflow-scrolling: touch;
+}
+
 .validator-grid {
   display: grid;
   gap: 1px;
   background: var(--glass-border);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 2.5rem;
+  min-width: 600px; /* Asegura que no se aplaste en móviles */
 }
 
 .grid-header {

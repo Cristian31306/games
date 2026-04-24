@@ -60,6 +60,8 @@ defineExpose({
           class="category-input"
           placeholder="..."
           :disabled="isDisabled"
+          enterkeyhint="next"
+          autocomplete="off"
         />
       </div>
 
@@ -94,8 +96,8 @@ defineExpose({
 }
 
 .card-filled {
-  border-color: rgba(124, 58, 237, 0.5);
-  background: rgba(124, 58, 237, 0.05);
+  border-color: var(--accent-color);
+  background: rgba(59, 130, 246, 0.04);
 }
 
 .stop-card {
@@ -114,30 +116,40 @@ defineExpose({
 }
 
 .waiting-skip {
-  background: rgba(124, 58, 237, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   border-color: var(--accent-color);
 }
 
 .skip-btn {
-  background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--glass-border);
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
   padding: 1rem 2rem;
   border-radius: 12px;
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%;
 }
 
 .skip-btn:hover:not(:disabled) {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
+  background: #e2e8f0;
+  border-color: #cbd5e1;
 }
 
 .stop-btn {
   width: 90%;
   height: 80px;
+}
+
+@media (max-width: 600px) {
+  .stop-btn {
+    height: 70px;
+    font-size: 1.5rem;
+  }
+  .skip-btn {
+    padding: 0.8rem;
+  }
 }
 
 @media (max-width: 900px) {

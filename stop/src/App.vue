@@ -29,13 +29,13 @@ const gameState = ref({
   timer: 0,
   validation: {},
   settings: {
-    timerDuration: 30,
+    timerDuration: 0,
     categories: [...DEFAULT_CATEGORIES]
   }
 })
 
 const localSettings = ref({
-  timerDuration: 30,
+  timerDuration: 0,
   categories: [...DEFAULT_CATEGORIES]
 })
 
@@ -50,6 +50,7 @@ const currentRoomId = ref('')
 const joined = ref(false)
 
 const boardRef = ref(null)
+
 
 const connectSocket = ({ name, roomId, isCreator }) => {
   myName.value = name
@@ -154,10 +155,7 @@ const me = computed(() => gameState.value.players[myId.value] || {})
         </div>
       </div>
       
-      <!-- Timer global superior -->
-      <div v-if="gameState.status === 'jugando'" class="global-timer">
-        {{ gameState.timer }}s
-      </div>
+
     </header>
 
     <main>
@@ -172,15 +170,7 @@ const me = computed(() => gameState.value.players[myId.value] || {})
             <div v-if="isHost" class="host-controls">
               <h3>Configuración (Anfitrión)</h3>
               
-              <div class="control-group">
-                <label>Temporizador:</label>
-                <div class="btn-group">
-                  <button :class="{ active: localSettings.timerDuration === 0 }" @click="changeTimer(0)">∞ Infinito</button>
-                  <button :class="{ active: localSettings.timerDuration === 10 }" @click="changeTimer(10)">10s</button>
-                  <button :class="{ active: localSettings.timerDuration === 20 }" @click="changeTimer(20)">20s</button>
-                  <button :class="{ active: localSettings.timerDuration === 30 }" @click="changeTimer(30)">30s</button>
-                </div>
-              </div>
+
 
               <div class="control-group">
                 <label>Categorías (Fijas):</label>
@@ -206,7 +196,7 @@ const me = computed(() => gameState.value.players[myId.value] || {})
               <ul class="guest-categories">
                 <li v-for="c in gameState.settings.categories" :key="c.id">{{ c.icon }} {{ c.label }}</li>
               </ul>
-              <p>Tiempo asignado: {{ gameState.settings.timerDuration }} segundos</p>
+
             </div>
             
           </div>
@@ -258,7 +248,20 @@ const me = computed(() => gameState.value.players[myId.value] || {})
 header {
   margin-bottom: 2rem;
   text-align: center;
+  background: var(--bg-color);
+  z-index: 100;
+  padding: 2rem 0.5rem;
+  border-bottom: 1px solid var(--glass-border);
 }
+
+header h1 {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s ease;
+  transform-origin: center;
+  margin: 0;
+  will-change: transform;
+}
+
+
 
 .room-id-tag {
   display: inline-block;
@@ -282,23 +285,26 @@ header {
   margin-left: 1rem;
 }
 
+
+
 .players-info {
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .player-tag {
   background: var(--glass-bg);
-  padding: 0.5rem 1.2rem;
+  padding: 0.4rem 1rem;
   border-radius: 100px;
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.6rem;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .dot {
