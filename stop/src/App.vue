@@ -74,13 +74,13 @@ const connectSocket = ({ name, roomId, isCreator }) => {
       playWin()
     }
   })
-
+/*
   socket.value.on('timerTick', (timeLeft) => {
     gameState.value.timer = timeLeft
     if (timeLeft <= 5 && timeLeft > 0) {
       playTick()
     }
-  })
+  }) */
 
   socket.value.on('stopTriggered', ({ stopperId, stopperName }) => {
     playBuzzer()
@@ -119,7 +119,7 @@ const updateSettings = () => {
 }
 
 const changeTimer = (val) => {
-  localSettings.value.timerDuration = val
+  localSettings.value.timerDuration = val 
   updateSettings()
 }
 
@@ -175,6 +175,7 @@ const me = computed(() => gameState.value.players[myId.value] || {})
               <div class="control-group">
                 <label>Temporizador:</label>
                 <div class="btn-group">
+                  <button :class="{ active: localSettings.timerDuration === 0 }" @click="changeTimer(0)">∞ Infinito</button>
                   <button :class="{ active: localSettings.timerDuration === 10 }" @click="changeTimer(10)">10s</button>
                   <button :class="{ active: localSettings.timerDuration === 20 }" @click="changeTimer(20)">20s</button>
                   <button :class="{ active: localSettings.timerDuration === 30 }" @click="changeTimer(30)">30s</button>

@@ -146,11 +146,15 @@ stopNamespace.on('connection', (socket) => {
                 room.players[id].roundDetails = {};
             });
 
-            if (room.countdownInterval) clearInterval(room.countdownInterval);
-            room.timer = room.settings.timerDuration;
-            
-            stopNamespace.to(roomId).emit('stateUpdate', room);
+// ... dentro de socket.on('startRound', () => { ...
 
+        if (room.countdownInterval) clearInterval(room.countdownInterval);
+        room.timer = room.settings.timerDuration;
+
+        stopNamespace.to(roomId).emit('stateUpdate', room);
+
+        // MODIFICACIÓN AQUÍ: Solo iniciar el intervalo si el tiempo es mayor a 0
+        if (room.settings.timerDuration > 0) {
             room.countdownInterval = setInterval(() => {
                 if (room.status !== 'jugando') {
                     clearInterval(room.countdownInterval);
@@ -167,6 +171,10 @@ stopNamespace.on('connection', (socket) => {
                     stopNamespace.to(roomId).emit('stateUpdate', room);
                 }
             }, 1000);
+        } else {
+            // Si el tiempo es 0, enviamos un mensaje opcional para avisar que es infinito
+            console.log(`Sala ${roomId}: Partida sin límite de tiempo.`);
+        }
         }
     });
 
