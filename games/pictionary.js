@@ -1,10 +1,31 @@
 const PICTIONARY_WORDS = [
+    // Originales
     "Casa", "Carro", "Sol", "Luna", "Perro", "Gato", "Árbol", "Flor", "Computador", "Celular",
     "Pizza", "Hamburguesa", "Avión", "Barco", "Tren", "Bicicleta", "Libro", "Lápiz", "Guitarra", "Piano",
     "Montaña", "Playa", "Nube", "Lluvia", "Fuego", "Agua", "Hielo", "Zapato", "Camisa", "Sombrero",
     "Reloj", "Gafas", "Llave", "Martillo", "Tijeras", "Cuchara", "Tenedor", "Cuchillo", "Plato", "Vaso",
     "Dinosaurio", "Dragón", "Castillo", "Rey", "Reina", "Pirata", "Tesoro", "Mapa", "Brújula", "Ancla",
-    "Espada", "Escudo", "Casco", "Robot", "Astronauta", "Cohete", "Planeta", "Estrella", "Alien", "Ovni"
+    "Espada", "Escudo", "Casco", "Robot", "Astronauta", "Cohete", "Planeta", "Estrella", "Alien", "Ovni",
+    // Animales
+    "Elefante", "Jirafa", "Cocodrilo", "Pingüino", "León", "Tigre", "Mariposa", "Abeja", "Ballena", "Delfín",
+    "Serpiente", "Caballo", "Vaca", "Cerdo", "Pollo", "Oveja", "Ratón", "Conejo", "Tortuga", "Mono",
+    "Oso", "Lobo", "Zorro", "Búho", "Águila", "Loro", "Pato", "Tiburón", "Pulpo", "Cangrejo",
+    // Objetos
+    "Destornillador", "Mochila", "Paraguas", "Antorcha", "Espejo", "Cámara", "Micrófono", "Linterna", "Maleta", "Escoba",
+    "Plancha", "Ventilador", "Lámpara", "Silla", "Mesa", "Cama", "Sofá", "Cuadro", "Alfombra", "Cortina",
+    "Batería", "Radio", "Televisión", "Botella", "Caja", "Bolsa", "Anillo", "Collar", "Reloj de arena", "Globo",
+    // Lugares
+    "Hospital", "Escuela", "Bosque", "Desierto", "Volcán", "Isla", "Biblioteca", "Panadería", "Cine", "Estadio",
+    "Parque", "Museo", "Puente", "Faro", "Pirámide", "Granja", "Iglesia", "Aeropuerto", "Puerto", "Castillo",
+    // Comida
+    "Helado", "Sushi", "Taco", "Ensalada", "Queso", "Pan", "Manzana", "Banano", "Zanahoria", "Brócoli",
+    "Sandía", "Uva", "Fresa", "Huevo", "Leche", "Carne", "Pescado", "Pollo frito", "Pastel", "Galleta",
+    // Naturaleza
+    "Arcoíris", "Cascada", "Relámpago", "Terremoto", "Tornado", "Palmera", "Cactus", "Girasol", "Rocas", "Cueva",
+    "Hoja", "Raíz", "Semilla", "Prado", "Valle", "Río", "Lago", "Océano", "Nieve", "Niebla",
+    // Varios
+    "Superhéroe", "Fantasma", "Vampiro", "Zombi", "Esqueleto", "Mago", "Payaso", "Ninja", "Vaquero", "Sirena",
+    "Unicornio", "Momia", "Diablo", "Ángel", "Corazón", "Cerebro", "Mano", "Pie", "Ojo", "Nariz"
 ];
 
 const pictionaryRooms = new Map();
@@ -21,6 +42,7 @@ function getOrCreatePictionaryRoom(roomId) {
             timer: 0,
             drawHistory: [],
             chat: [],
+            usedWords: [],
             settings: {
                 maxRounds: 5,
                 roundTime: 80
@@ -66,6 +88,18 @@ export default function registerPictionaryHandlers(io, socket) {
         }
     });
 
+    socket.on('nextRound', () => {
+        const room = pictionaryRooms.get(socket.roomId);
+        if (room && room.hostId === socket.id && room.status === 'resultado') {
+            if (room.round >= room.settings.maxRounds * Object.keys(room.players).length) {
+                room.status = 'final';
+                pictionaryNamespace.to(socket.roomId).emit('stateUpdate', sanitizeRoom(room));
+            } else {
+                startNewRound(room, socket.roomId);
+            }
+        }
+    });
+
     function startNewRound(room, roomId) {
         const playerIds = Object.keys(room.players);
         if (playerIds.length < 2) return;
@@ -78,8 +112,16 @@ export default function registerPictionaryHandlers(io, socket) {
         const currentDrawerIndex = room.drawerId ? (playerIds.indexOf(room.drawerId) + 1) % playerIds.length : 0;
         room.drawerId = playerIds[currentDrawerIndex];
         
-        // Seleccionar palabra
-        room.currentWord = PICTIONARY_WORDS[Math.floor(Math.random() * PICTIONARY_WORDS.length)];
+        // Seleccionar palabra no repetida
+        let availableWords = PICTIONARY_WORDS.filter(w => !room.usedWords.includes(w));
+        if (availableWords.length === 0) {
+            room.usedWords = []; // Reiniciar si se acaban
+            availableWords = PICTIONARY_WORDS;
+        }
+        
+        const randomIndex = Math.floor(Math.random() * availableWords.length);
+        room.currentWord = availableWords[randomIndex];
+        room.usedWords.push(room.currentWord);
         
         // Resetear aciertos
         playerIds.forEach(id => room.players[id].hasGuessed = false);
@@ -99,6 +141,7 @@ export default function registerPictionaryHandlers(io, socket) {
         }, 1000);
 
         pictionaryNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
+        pictionaryNamespace.to(roomId).emit('clearCanvas'); // Limpiar para todos
         // Avisar específicamente al dibujante cuál es su palabra
         pictionaryNamespace.to(room.drawerId).emit('yourWord', room.currentWord);
     }
@@ -108,16 +151,6 @@ export default function registerPictionaryHandlers(io, socket) {
         room.status = 'resultado';
         room.chat.push({ system: true, message: `La palabra era: ${room.currentWord}` });
         pictionaryNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
-
-        // Esperar 5 segundos antes de la siguiente ronda o finalizar
-        setTimeout(() => {
-            if (room.round >= room.settings.maxRounds * Object.keys(room.players).length) {
-                room.status = 'final';
-                pictionaryNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
-            } else {
-                startNewRound(room, roomId);
-            }
-        }, 5000);
     }
 
     socket.on('draw', (data) => {
@@ -167,7 +200,7 @@ export default function registerPictionaryHandlers(io, socket) {
         }
 
         room.chat.push({ name: player.name, message });
-        if (room.chat.length > 20) room.chat.shift();
+        if (room.chat.length > 50) room.chat.shift();
         pictionaryNamespace.to(socket.roomId).emit('message', { name: player.name, message });
     });
 

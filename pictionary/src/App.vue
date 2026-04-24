@@ -37,6 +37,9 @@ onMounted(() => {
         state.drawHistory.forEach(data => drawOnCanvas(data))
       })
     }
+    nextTick(() => {
+      scrollToBottom()
+    })
   })
 
   socket.value.on('draw', (data) => {
@@ -60,15 +63,18 @@ onMounted(() => {
   socket.value.on('message', (msg) => {
     if (gameState.value) {
       if (!gameState.value.chat) gameState.value.chat = []
-      gameState.value.chat.push(msg)
-      if (gameState.value.chat.length > 20) gameState.value.chat.shift()
+      if (gameState.value.chat.length > 50) gameState.value.chat.shift()
     }
     nextTick(() => {
-      if (chatContainer.value) {
-        chatContainer.value.scrollTop = chatContainer.value.scrollHeight
-      }
+      scrollToBottom()
     })
   })
+
+  const scrollToBottom = () => {
+    if (chatContainer.value) {
+      chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+    }
+  }
 })
 
 const startCreate = () => {
@@ -168,6 +174,10 @@ const sendMessage = () => {
     socket.value.emit('sendMessage', message.value)
     message.value = ''
   }
+}
+
+const nextRound = () => {
+  socket.value.emit('nextRound')
 }
 
 const getInitials = (name) => {
@@ -297,6 +307,10 @@ const getInitials = (name) => {
                 <div v-if="gameState.status === 'resultado'" class="round-overlay">
                   <h3>¡Tiempo agotado!</h3>
                   <p>La palabra era: <strong>{{ gameState.currentWord }}</strong></p>
+                  <div v-if="isHost" class="overlay-actions">
+                    <button @click="nextRound" class="main-btn next-btn">SIGUIENTE PALABRA <i class="fas fa-arrow-right"></i></button>
+                  </div>
+                  <div v-else class="waiting-footer">Esperando que el host continúe...</div>
                 </div>
               </div>
 
@@ -520,4 +534,22 @@ canvas { width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeIn 0.8s ease; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+.next-btn {
+  margin-top: 1.5rem;
+  max-width: 300px;
+  background: var(--primary) !important;
+}
+
+.overlay-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.round-overlay {
+  box-shadow: 0 0 50px rgba(0,0,0,0.1);
+  border-radius: var(--radius);
+  margin: 1rem;
+}
 </style>
