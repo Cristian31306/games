@@ -5,6 +5,11 @@ set -e
 
 echo "🚀 Iniciando despliegue de Canal Games Hub..."
 
+# 0. Limpiar y Actualizar desde Git
+echo "📥 Bajando últimas actualizaciones de GitHub..."
+git fetch --all
+git reset --hard origin/main
+
 # 1. Instalar dependencias del proyecto raíz
 echo "📦 Instalar dependencias raíz..."
 npm install
