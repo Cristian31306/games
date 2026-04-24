@@ -30,6 +30,12 @@ function getOrCreateStopRoom(roomId) {
     return stopRooms.get(roomId);
 }
 
+function sanitizeRoom(room) {
+    const cleanRoom = { ...room };
+    delete cleanRoom.countdownInterval;
+    return cleanRoom;
+}
+
 const normalize = (str) => {
     return (str || '')
         .normalize('NFD')
@@ -75,7 +81,7 @@ export default function registerStopHandlers(io, socket) {
             room.hostId = socket.id;
         }
 
-        stopNamespace.to(roomId).emit('stateUpdate', room);
+        stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
     });
 
     socket.on('updateSettings', (settings) => {
@@ -85,7 +91,7 @@ export default function registerStopHandlers(io, socket) {
                 settings.categories = [...DEFAULT_CATEGORIES];
             }
             room.settings = settings;
-            stopNamespace.to(socket.roomId).emit('stateUpdate', room);
+            stopNamespace.to(socket.roomId).emit('stateUpdate', sanitizeRoom(room));
         }
     });
 
@@ -113,7 +119,7 @@ export default function registerStopHandlers(io, socket) {
             if (room.countdownInterval) clearInterval(room.countdownInterval);
             room.timer = room.settings.timerDuration;
 
-            stopNamespace.to(roomId).emit('stateUpdate', room);
+            stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
 
             if (room.settings.timerDuration > 0) {
                 room.countdownInterval = setInterval(() => {
@@ -129,7 +135,7 @@ export default function registerStopHandlers(io, socket) {
                         room.status = 'calificando';
                         initializeValidation(room);
                         stopNamespace.to(roomId).emit('stopTriggered', { stopperId: 'system', stopperName: 'El Tiempo' });
-                        stopNamespace.to(roomId).emit('stateUpdate', room);
+                        stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
                     }
                 }, 1000);
             }
@@ -145,7 +151,7 @@ export default function registerStopHandlers(io, socket) {
             room.status = 'calificando';
             initializeValidation(room);
             stopNamespace.to(roomId).emit('stopTriggered', { stopperId: socket.id, stopperName: room.players[socket.id].name });
-            stopNamespace.to(roomId).emit('stateUpdate', room);
+            stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
         }
     });
 
@@ -153,7 +159,7 @@ export default function registerStopHandlers(io, socket) {
         const room = stopRooms.get(socket.roomId);
         if (room && room.status === 'calificando' && room.validation[targetPlayerId]) {
             room.validation[targetPlayerId][categoryId] = !room.validation[targetPlayerId][categoryId];
-            stopNamespace.to(socket.roomId).emit('stateUpdate', room);
+            stopNamespace.to(socket.roomId).emit('stateUpdate', sanitizeRoom(room));
         }
     });
 
@@ -169,7 +175,7 @@ export default function registerStopHandlers(io, socket) {
                     room.validation[socket.id][cat.id] = answer.length > 1;
                 });
             }
-            stopNamespace.to(roomId).emit('stateUpdate', room);
+            stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
         }
     });
 
@@ -180,7 +186,7 @@ export default function registerStopHandlers(io, socket) {
             room.players[socket.id].readyToResults = true;
             
             const allReady = Object.values(room.players).every(p => p.readyToResults);
-            stopNamespace.to(roomId).emit('stateUpdate', room);
+            stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
 
             if (allReady && Object.keys(room.players).length > 0) {
                 Object.values(room.players).forEach(player => {
@@ -234,7 +240,7 @@ export default function registerStopHandlers(io, socket) {
 
                 room.rounds.push(roundData);
                 room.status = 'resultados';
-                stopNamespace.to(roomId).emit('stateUpdate', room);
+                stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
             }
         }
     });
@@ -252,7 +258,7 @@ export default function registerStopHandlers(io, socket) {
                 if (socket.id === room.hostId) {
                     room.hostId = remainingIds[0];
                 }
-                stopNamespace.to(roomId).emit('stateUpdate', room);
+                stopNamespace.to(roomId).emit('stateUpdate', sanitizeRoom(room));
             }
         }
     });
