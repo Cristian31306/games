@@ -176,9 +176,12 @@ export default function registerPictionaryHandlers(io, socket) {
         const player = room.players[socket.id];
         if (!player) return;
 
+        // Función para normalizar texto (quitar acentos y minúsculas)
+        const normalize = (str) => str.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
         // Verificar si es la palabra correcta (y no es el dibujante)
         if (room.status === 'jugando' && socket.id !== room.drawerId && !player.hasGuessed) {
-            if (message.toLowerCase().trim() === room.currentWord.toLowerCase().trim()) {
+            if (normalize(message) === normalize(room.currentWord)) {
                 player.hasGuessed = true;
                 player.points += Math.max(10, room.timer); // Más puntos si adivina rápido
                 
