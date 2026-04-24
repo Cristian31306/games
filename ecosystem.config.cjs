@@ -8,11 +8,11 @@ module.exports = {
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'development',
-      PORT: 3000
+      PORT: 4321
     },
     env_production: {
       NODE_ENV: 'production',
-      PORT: 80 // O el puerto que use el VPS
+      PORT: 4321
     }
   }]
 };
